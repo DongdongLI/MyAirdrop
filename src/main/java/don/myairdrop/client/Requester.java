@@ -1,21 +1,20 @@
 package don.myairdrop.client;
 
 import java.io.BufferedOutputStream;
+import java.io.EOFException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.management.ManagementFactory;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 import java.util.Set;
 
 import don.myairdrop.model.Node;
-import don.myairdrop.server.Provider;
 
-public class Requester implements Node {
+public class Requester implements Node, Runnable{
 
 	Socket requestSocket;
 	
@@ -40,10 +39,12 @@ public class Requester implements Node {
 	@Override
 	public void run() {
 		try{
-			
+			Thread.currentThread().setName("requester");
 			requestSocket = new Socket("localhost", 6666);
 			System.out.println("Connected to localhost:6666");
-			receieveFile();
+			
+			showOptions();
+			
 		}catch(IOException e){
 			e.printStackTrace();
 		}
@@ -60,6 +61,36 @@ public class Requester implements Node {
 		}
 	}
 	
+	public void showOptions() {
+		System.out.println("====================");
+		System.out.println("Start as ");
+		System.out.println("====================");
+		System.out.println("1 (Greeting)");
+		System.out.println("2 (Receiving a file)");
+		
+		String choice = null;
+		while(choice == null || choice.length()!=1 || !Character.isDigit(choice.charAt(0))){
+			choice = s.nextLine().trim();
+		}
+		
+		switch (choice){
+			case "1":
+				System.out.println("============================");
+				System.out.println("Greeting");
+				System.out.println("============================");
+				chatListenThread.start();
+				break;
+			case "2":
+				System.out.println("============================");
+				System.out.println("Receiving a file");
+				System.out.println("============================");
+				receieveFile();
+				break;
+			default:
+				break;
+		}
+	}
+	
 	public void receieveFile() {
 		byte[] buff = new byte[1000];
 		try {
@@ -68,15 +99,29 @@ public class Requester implements Node {
 			bos = new BufferedOutputStream(fos);
 			
 			int len = is.read(buff);
-			while( len != 0){
+			while( len != -1){
 				System.out.println("write "+len+" bytes...");
 				bos.write(buff, 0, len);
 				bos.flush();
 				len = is.read(buff);
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} 
+		catch (EOFException e) {
+			System.out.println("!!!!!!!!!file download complete");
+		}
+		
+		catch (IOException e) {
 			e.printStackTrace();
+		} 
+		
+		finally {
+			try{
+				is.close();
+				fos.close();
+				bos.close();
+			} catch(IOException e){
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -91,11 +136,7 @@ public class Requester implements Node {
 	}
 		
 	public static void main(String[] args) {
-		Thread.currentThread().setName("RequesterMain");
-		Requester requestor = new Requester();
-		requestor.run();
-		
-		new Thread(chatListenThread).run();
+		new Thread(new Requester()).start();
 	}
 	
 	public class ChatSendThread implements Runnable{

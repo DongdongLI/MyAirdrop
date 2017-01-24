@@ -15,7 +15,7 @@ import java.util.Set;
 
 import don.myairdrop.model.Node;
 
-public class Provider implements Node {
+public class Provider implements Node, Runnable {
 	
 	ServerSocket providerSocket;
 	static Socket conn = null;
@@ -40,24 +40,26 @@ public class Provider implements Node {
 	
 	@Override
 	public void run() {
-		
+				
+		Thread.currentThread().setName("provider");
 		try {
-			providerSocket = new ServerSocket(6666, 10);
-			System.out.println("Listening on port 6666...");
-			
-			conn = providerSocket.accept();
-
-			while(conn==null){
+				providerSocket = new ServerSocket(6666, 10);
+				System.out.println("Listening on port 6666...");
+				
 				conn = providerSocket.accept();
+	
+				while(conn==null){
+					conn = providerSocket.accept();
+				}
+			
+				System.out.println("Connected. From "+conn.getInetAddress()+":"+conn.getPort());
+		
+				showMenu();
+				
 			}
-			
-			System.out.println("Connected. From "+conn.getInetAddress()+":"+conn.getPort());
-			
-			
-			
-		} catch (IOException e){
-			e.printStackTrace();
-		}
+			catch (IOException e){
+				e.printStackTrace();
+			}
 		
 	}
 	
@@ -92,6 +94,14 @@ public class Provider implements Node {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally{
+			try{
+				fis.close();
+				bis.close();
+				os.close();
+			} catch(IOException e){
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -135,9 +145,9 @@ public class Provider implements Node {
 	
 	public static void main(String[] args) {
 		Thread.currentThread().setName("ProviderMain");
-		Provider provider = new Provider();
-		provider.run();
-		showMenu();
+
+		new Thread(new Provider()).start();
+		
 	}
 	
 	public class ChatterSenderThread implements Runnable{
