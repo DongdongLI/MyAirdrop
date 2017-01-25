@@ -16,6 +16,8 @@ import don.myairdrop.model.Node;
 
 public class Requester implements Node, Runnable{
 
+	long FILE_NAME_TEMP;
+	
 	Socket requestSocket;
 	
 	InputStream is;
@@ -34,6 +36,8 @@ public class Requester implements Node, Runnable{
 	public Requester() {
 		chatSendThread = new Thread(new ChatSendThread());
 		chatListenThread = new Thread(new ChatListenThread());
+		
+		FILE_NAME_TEMP = System.currentTimeMillis();
 	}
 	
 	@Override
@@ -84,7 +88,8 @@ public class Requester implements Node, Runnable{
 				System.out.println("============================");
 				System.out.println("Receiving a file");
 				System.out.println("============================");
-				receieveFile();
+				//receieveFile();
+				receieveFiles();
 				break;
 			default:
 				break;
@@ -104,6 +109,53 @@ public class Requester implements Node, Runnable{
 				bos.write(buff, 0, len);
 				bos.flush();
 				len = is.read(buff);
+			}
+		} 
+		catch (EOFException e) {
+			System.out.println("!!!!!!!!!file download complete");
+		}
+		
+		catch (IOException e) {
+			e.printStackTrace();
+		} 
+		
+		finally {
+			try{
+				is.close();
+				fos.close();
+				bos.close();
+			} catch(IOException e){
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void receieveFiles() {
+		boolean eofHelper = false;
+		byte[] buff = new byte[1000];
+		
+		int count = 5;
+		int i=0;
+		
+		try {
+			is = requestSocket.getInputStream();
+			while(i<count){
+				fos = new FileOutputStream(FILE_NAME_TEMP+"");
+				bos = new BufferedOutputStream(fos);
+				
+				int len = is.read(buff);
+				if(eofHelper == true && len == -1)break;// no more files to read
+				while( len != -1 && len != 0){
+					eofHelper = false;
+					System.out.println("write "+len+" bytes...");
+					bos.write(buff, 0, len);
+					bos.flush();
+					len = is.read(buff);
+				}
+				eofHelper=true;
+				FILE_NAME_TEMP++;
+								
+				i++;
 			}
 		} 
 		catch (EOFException e) {

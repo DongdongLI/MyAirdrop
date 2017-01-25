@@ -10,6 +10,8 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -74,22 +76,25 @@ public class Provider implements Node, Runnable {
 		}
 	}
 	
-	public static void sendFile(String path){
-		try {
-			File file = new File(path);
-			byte[] buff = new byte[1000];
-			fis = new FileInputStream(file);
-			bis = new BufferedInputStream(fis);
-			os = conn.getOutputStream();
-			
-			int len = bis.read(buff, 0, buff.length);
-			while(len != -1){
-				System.out.println("write out "+len+" bytes");
-				os.write(buff, 0, len);
-				os.flush();
-				len = bis.read(buff, 0, buff.length);
-			}
-			
+	public static void sendFile(List<String> paths){
+		
+			//try {
+		try{
+			for(String path: paths){
+				File file = new File(path);
+				byte[] buff = new byte[1000];
+				fis = new FileInputStream(file);
+				bis = new BufferedInputStream(fis);
+				os = conn.getOutputStream();
+				
+				int len = bis.read(buff, 0, buff.length);
+				while(len != -1){
+					System.out.println("write out "+len+" bytes");
+					os.write(buff, 0, len);
+					os.flush();
+					len = bis.read(buff, 0, buff.length);
+				}
+			}	
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -127,7 +132,9 @@ public class Provider implements Node, Runnable {
 				System.out.println("============================");
 				System.out.println("Send a file");
 				System.out.println("============================");
-				sendFile("C:/Users/dli/DeskTop/Amazon.pdf");
+				List<String> paths = new ArrayList<String>();
+				paths.add("C:/Users/dli/DeskTop/Amazon.pdf");paths.add("C:/Users/dli/DeskTop/Binder.pdf");
+				sendFile(paths);
 				break;
 			default:
 				break;
