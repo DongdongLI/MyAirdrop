@@ -2,6 +2,7 @@ package don.myairdrop.client;
 
 import java.io.BufferedOutputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +10,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -131,31 +134,55 @@ public class Requester implements Node, Runnable{
 	}
 	
 	public void receieveFiles() {
-		boolean eofHelper = false;
-		byte[] buff = new byte[1000];
 		
-		int count = 5;
-		int i=0;
+		Map<String, Long> files = null;
+		try{
+			ois = new ObjectInputStream(requestSocket.getInputStream());
+			files = (LinkedHashMap<String, Long>)ois.readObject();
+			System.out.println(files);
+		} catch (ClassNotFoundException e){
+			e.printStackTrace();
+		} catch (IOException e){
+			e.printStackTrace();
+		}
+		
+		
+		byte[] buff = new byte[1000];
+
+		long fileSize=0;
+		int tempSize = 0;
 		
 		try {
 			is = requestSocket.getInputStream();
-			while(i<count){
-				fos = new FileOutputStream(FILE_NAME_TEMP+"");
+			for(String fileName: files.keySet()){
+				
+				fileSize = files.get(fileName);
+				
+				fos = new FileOutputStream(new File(fileName));
 				bos = new BufferedOutputStream(fos);
 				
+				if(tempSize!=0){
+					bos.write(buff, 0, tempSize);
+					bos.flush();
+					tempSize = 0;
+				}
+				
 				int len = is.read(buff);
-				if(eofHelper == true && len == -1)break;// no more files to read
-				while( len != -1 && len != 0){
-					eofHelper = false;
-					System.out.println("write "+len+" bytes...");
+				int sizeReceieved = len;
+				
+				
+				
+				//while( len != -1 ){//&& sizeReceieved<fileSize){
+				while( len != -1 && sizeReceieved<=fileSize){
+					
 					bos.write(buff, 0, len);
 					bos.flush();
 					len = is.read(buff);
+					sizeReceieved+=len;
 				}
-				eofHelper=true;
-				FILE_NAME_TEMP++;
-								
-				i++;
+				
+				if(sizeReceieved>fileSize)
+					tempSize = len;	
 			}
 		} 
 		catch (EOFException e) {

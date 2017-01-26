@@ -11,7 +11,10 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -24,8 +27,8 @@ public class Provider implements Node, Runnable {
 	
 	static OutputStream os = null;
 	
-	ObjectOutputStream oos = null;
-	ObjectInputStream ois = null;
+	static ObjectOutputStream oos = null;
+	static ObjectInputStream ois = null;
 	
 	static FileInputStream fis = null;
 	static BufferedInputStream bis = null;
@@ -77,8 +80,33 @@ public class Provider implements Node, Runnable {
 	}
 	
 	public static void sendFile(List<String> paths){
+		/*
+		 * Send the list of 
+		 * 		file name and 
+		 * 		the size of them 
+		 * to the client
+		 * 
+		 * */
+		Map<String, Long> files = new LinkedHashMap<String, Long>();
+		File f;
+		for(String path: paths){
+			String fileName = path.substring(path.lastIndexOf("/")+1, path.length());
+			f = new File(path);
+			files.put(fileName, f.length() );
+		}
 		
-			//try {
+		try{
+			oos = new ObjectOutputStream(conn.getOutputStream());
+			oos.flush();
+
+			oos.writeObject(files);
+			oos.flush();
+			
+		} catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		
 		try{
 			for(String path: paths){
 				File file = new File(path);
@@ -89,10 +117,11 @@ public class Provider implements Node, Runnable {
 				
 				int len = bis.read(buff, 0, buff.length);
 				while(len != -1){
-					System.out.println("write out "+len+" bytes");
+					//System.out.println("write out "+len+" bytes");
 					os.write(buff, 0, len);
 					os.flush();
 					len = bis.read(buff, 0, buff.length);
+					//len = bis.read(buff);
 				}
 			}	
 		} catch (FileNotFoundException e) {
@@ -133,7 +162,10 @@ public class Provider implements Node, Runnable {
 				System.out.println("Send a file");
 				System.out.println("============================");
 				List<String> paths = new ArrayList<String>();
-				paths.add("C:/Users/dli/DeskTop/Amazon.pdf");paths.add("C:/Users/dli/DeskTop/Binder.pdf");
+//				paths.add("C:/Users/dli/DeskTop/Amazon.pdf");
+//				paths.add("C:/Users/dli/DeskTop/Binder.pdf");
+				paths.add("C:/Users/dli/DeskTop/pdf.pdf");
+				paths.add("C:/Users/dli/DeskTop/car_rental.pdf");
 				sendFile(paths);
 				break;
 			default:
