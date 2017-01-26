@@ -91,45 +91,10 @@ public class Requester implements Node, Runnable{
 				System.out.println("============================");
 				System.out.println("Receiving a file");
 				System.out.println("============================");
-				//receieveFile();
 				receieveFiles();
 				break;
 			default:
 				break;
-		}
-	}
-	
-	public void receieveFile() {
-		byte[] buff = new byte[1000];
-		try {
-			is = requestSocket.getInputStream();
-			fos = new FileOutputStream("received");
-			bos = new BufferedOutputStream(fos);
-			
-			int len = is.read(buff);
-			while( len != -1){
-				System.out.println("write "+len+" bytes...");
-				bos.write(buff, 0, len);
-				bos.flush();
-				len = is.read(buff);
-			}
-		} 
-		catch (EOFException e) {
-			System.out.println("!!!!!!!!!file download complete");
-		}
-		
-		catch (IOException e) {
-			e.printStackTrace();
-		} 
-		
-		finally {
-			try{
-				is.close();
-				fos.close();
-				bos.close();
-			} catch(IOException e){
-				e.printStackTrace();
-			}
 		}
 	}
 	
@@ -172,7 +137,6 @@ public class Requester implements Node, Runnable{
 				
 				
 				
-				//while( len != -1 ){//&& sizeReceieved<fileSize){
 				while( len != -1 && sizeReceieved<=fileSize){
 					
 					bos.write(buff, 0, len);
@@ -184,9 +148,6 @@ public class Requester implements Node, Runnable{
 				if(sizeReceieved>fileSize)
 					tempSize = len;	
 			}
-		} 
-		catch (EOFException e) {
-			System.out.println("!!!!!!!!!file download complete");
 		}
 		
 		catch (IOException e) {
@@ -244,8 +205,8 @@ public class Requester implements Node, Runnable{
 			
 			try{
 				oos = new ObjectOutputStream(requestSocket.getOutputStream());
-			
 				oos.flush();
+				
 				ois = new ObjectInputStream(requestSocket.getInputStream());
 				
 				chatSendThread.start();
@@ -253,7 +214,6 @@ public class Requester implements Node, Runnable{
 					try{
 						msg = (String)ois.readObject();
 						System.out.println("server> "+msg);
-						//sendMessage("Hi my server");
 					}
 					catch(ClassNotFoundException e){
 						e.printStackTrace();

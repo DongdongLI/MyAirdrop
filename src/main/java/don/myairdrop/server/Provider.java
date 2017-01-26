@@ -11,7 +11,6 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +34,7 @@ public class Provider implements Node, Runnable {
 	
 	static Scanner s = new Scanner(System.in);
 	String msg;
+	
 	Thread chatterSendThread;
 	static Thread chatterListenThread;
 	
@@ -117,11 +117,9 @@ public class Provider implements Node, Runnable {
 				
 				int len = bis.read(buff, 0, buff.length);
 				while(len != -1){
-					//System.out.println("write out "+len+" bytes");
 					os.write(buff, 0, len);
 					os.flush();
 					len = bis.read(buff, 0, buff.length);
-					//len = bis.read(buff);
 				}
 			}	
 		} catch (FileNotFoundException e) {
@@ -162,8 +160,6 @@ public class Provider implements Node, Runnable {
 				System.out.println("Send a file");
 				System.out.println("============================");
 				List<String> paths = new ArrayList<String>();
-//				paths.add("C:/Users/dli/DeskTop/Amazon.pdf");
-//				paths.add("C:/Users/dli/DeskTop/Binder.pdf");
 				paths.add("C:/Users/dli/DeskTop/pdf.pdf");
 				paths.add("C:/Users/dli/DeskTop/car_rental.pdf");
 				sendFile(paths);
@@ -184,9 +180,7 @@ public class Provider implements Node, Runnable {
 	
 	public static void main(String[] args) {
 		Thread.currentThread().setName("ProviderMain");
-
 		new Thread(new Provider()).start();
-		
 	}
 	
 	public class ChatterSenderThread implements Runnable{
